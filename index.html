@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>National Animal Rabies Dashboard</title>
+<meta name="description" content="Summary of animal samples tested for rabies by participating Philippine laboratories, with heat maps by province, municipality and barangay.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f766e'/%3E%3Cpath d='M8 22l5-12 4 8 3-5 4 9' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<style>.map-h { font-size: 18px; margin: 22px 0 10px; } .top { position: static; }</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="logos"><div class="rln"><img src="img/logo-rln-emblem.png" alt="Rabies Laboratory Network emblem"><span><b>Rabies</b>Laboratory Network</span></div></div>
+      <div><div class="org">Bureau of Animal Industry</div><h1>National Animal Rabies Dashboard</h1><div class="tag">Philippines · overview and heat maps</div></div>
+    </div>
+    <div class="refresh"><div class="stamp" id="stamp"></div><img class="bai" src="img/logo-da-bai.png" alt="Department of Agriculture, Bureau of Animal Industry"></div>
+  </div>
+</header>
+<main id="main" tabindex="-1"><p class="loading">Loading…</p></main>
+<footer class="foot">
+  <p><b>About these numbers.</b> Counts are animal samples submitted to and tested by participating rabies laboratories. They are not a count of all rabies cases or all animals, and areas that submit more samples will show more positives. Positivity rate = positive ÷ (positive + negative); inconclusive and unfit samples are left out. Positivity is not shown where fewer than 5 samples were tested. The page shows summary counts only; no individual records or owner information are published.</p>
+  <p>Map outlines: PSGC 2023 boundaries via github.com/faeldon/philippines-json-maps. Barangay outlines are loaded from that source when you open a municipality.</p>
+</footer>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
