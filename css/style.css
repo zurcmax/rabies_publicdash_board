@@ -230,3 +230,25 @@ details.d summary { cursor: pointer; font-weight: 600; }
 img.bai { height: 58px; width: auto; display: block; margin-left: 6px; padding-left: 16px; border-left: 1px solid var(--line); }
 .brand > div:last-child { border-left: 3px solid var(--accent); }
 @media (max-width: 760px) { img.bai { height: 40px; padding-left: 10px; } .org { font-size: 10px; } }
+
+/* ---- header layout v2: logos + refresh on top row, title block underneath ---- */
+.top-in { align-items: center; padding-top: 12px; padding-bottom: 4px; }
+.logos { gap: 18px; align-items: center; }
+.logos > * { padding: 0; border-left: 0; }
+.logos > img { height: 66px; width: auto; box-sizing: content-box; }
+.logos .rln { gap: 9px; padding-left: 4px; border-left: 0; }
+.logos .rln img { height: 56px; }
+.titlebar { max-width: 1280px; margin: 0 auto; padding: 4px 16px 10px; }
+.titles { border-left: 3px solid var(--accent); padding-left: 14px; }
+.titles .org { margin: 0; }
+.titles h1 { font-size: 24px; line-height: 1.2; }
+.titles .tag { font-size: 13.5px; color: var(--muted); margin-top: 1px; }
+@media (max-width: 760px) {
+  .logos { gap: 10px; }
+  .logos > img { height: 44px; } .logos .rln img { height: 38px; }
+  .titles h1 { font-size: 19px; }
+}
+@media (max-width: 420px) { .logos > img { height: 38px; } }
+
+.top { border-bottom: 3px solid var(--accent); }
+
