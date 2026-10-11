@@ -203,7 +203,7 @@ export function renderMap(host, D) {
         const lg = e.target.closest('g.lab');
         if (lg) {
           const lab = (D.labs || [])[+lg.dataset.lab], r0 = box.getBoundingClientRect();
-          tip.innerHTML = `<b>${esc(lab.name)}</b><br>${esc([lab.muni, lab.prov].filter(Boolean).join(', '))}<br>${fmtInt(lab.n)} samples received`; tip.hidden = false;
+          tip.innerHTML = `<b>${esc(lab.name)}</b><br>${esc([lab.muni, lab.prov].filter(Boolean).join(', '))}${lab.type ? `<br><i>${esc(lab.type)}</i>` : ""}${lab.reports ? `<br>${fmtInt(lab.n)} samples received` : ""}`; tip.hidden = false;
           tip.style.left = Math.min(e.clientX - r0.left + 12, r0.width - 200) + 'px'; tip.style.top = (e.clientY - r0.top + 12) + 'px'; return;
         }
         const p = e.target.closest('path'); if (!p) { tip.hidden = true; return; }

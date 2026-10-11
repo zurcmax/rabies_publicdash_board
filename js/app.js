@@ -44,8 +44,8 @@ async function init() {
     section('Species submitted', barList(sp.map(p => ({ label: p.name, value: p.n, text: `${fmtInt(p.n)} · ${p.tested >= 5 ? pct(p) : '–'}` })))) +
     `</div>` +
     `<h2 class="map-h">Heat maps</h2><div id="maps"></div>` +
-    ((D.labs || []).length ? section('Participating laboratories', `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Laboratory</th><th>Location</th><th class="num">Samples received</th></tr></thead><tbody>
-      ${[...D.labs].sort((a, b) => b.n - a.n).map(l => `<tr><td class="wrap">${esc(l.name)}</td><td class="wrap">${esc([l.muni, l.prov].filter(Boolean).join(', '))}</td><td class="num">${fmtInt(l.n)}</td></tr>`).join('')}</tbody></table></div>`,
+    ((D.labs || []).length ? section('Participating laboratories', `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Laboratory</th><th>Type</th><th>Location</th><th class="num">Samples received</th></tr></thead><tbody>
+      ${[...D.labs].sort((a, b) => b.n - a.n).map(l => `<tr><td class="wrap">${esc(l.name)}</td><td>${esc(l.type || "")}</td><td class="wrap">${esc([l.muni, l.prov].filter(Boolean).join(', '))}</td><td class="num">${l.reports ? fmtInt(l.n) : "–"}</td></tr>`).join('')}</tbody></table></div>`,
       'Laboratories with a known location are also shown as dots on the heat maps.') : '');
   renderMap($('#maps'), D);
 }
