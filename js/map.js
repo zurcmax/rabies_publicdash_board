@@ -16,7 +16,7 @@ const provNameOf = p => /^NCR/.test(p.adm2_en || '') ? 'Metro Manila' : (p.adm2_
 async function countryFeatures() {
   if (!geo.country) {
     const fcs = await Promise.all(REGION_FILES.map(f => getJSON(`data/geo/reg/${f}.json`)));
-    geo.country = fcs.flatMap(fc => fc.features.map(ft => ({ code: String(ft.properties.adm2_psgc), name: provNameOf(ft.properties), rawName: ft.properties.adm2_en || '', geom: ft.geometry })));
+    geo.country = fcs.flatMap(fc => fc.features.filter(ft => ft.geometry).map(ft => ({ code: String(ft.properties.adm2_psgc), name: provNameOf(ft.properties), rawName: ft.properties.adm2_en || '', geom: ft.geometry })));
   }
   return geo.country;
 }
@@ -25,14 +25,14 @@ async function provFeatures(prov) {
   const feats = await countryFeatures();
   const codes = prov === 'Metro Manila' ? NCR_CODES : feats.filter(f => f.name === prov).map(f => f.code);
   const fcs = await Promise.all(codes.map(c => getJSON(`data/geo/prov/${c}.json`)));
-  return geo.prov[prov] = fcs.flatMap(fc => fc.features.map(ft => ({ code: String(ft.properties.adm3_psgc), name: ft.properties.adm3_en || '', geom: ft.geometry })));
+  return geo.prov[prov] = fcs.flatMap(fc => fc.features.filter(ft => ft.geometry).map(ft => ({ code: String(ft.properties.adm3_psgc), name: ft.properties.adm3_en || '', geom: ft.geometry })));
 }
 async function brgyFeatures(code) {
   if (geo.brgy[code]) return geo.brgy[code];
   let fc;
   try { fc = await getJSON(`${GH}/medres/bgysubmuns-municity-${code}.0.01.json`); }
   catch { fc = await getJSON(`${GH}/lowres/bgysubmuns-municity-${code}.0.001.json`); }
-  return geo.brgy[code] = fc.features.map(ft => ({ code: String(ft.properties.adm4_psgc || ''), name: ft.properties.adm4_en || '', geom: ft.geometry }));
+  return geo.brgy[code] = fc.features.filter(ft => ft.geometry).map(ft => ({ code: String(ft.properties.adm4_psgc || ''), name: ft.properties.adm4_en || '', geom: ft.geometry }));
 }
 
 // ---- matching place names to outlines ----
@@ -63,7 +63,7 @@ function linkKeys(keys, feats) {
 // ---- projection ----
 const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
 function eachPt(geom, fn) {
-  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+  const polys = !geom ? [] : geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
   for (const p of polys) for (const ring of p) for (const pt of ring) fn(pt);
 }
 function layout(feats) {
@@ -73,7 +73,7 @@ function layout(feats) {
   return { proj: ([lon, lat]) => [(lon - x0) * s + pad, (y1 - merc(lat)) * k * s + pad], W: W + pad * 2, Ht: H + pad * 2 };
 }
 function pathD(geom, proj) {
-  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+  const polys = !geom ? [] : geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
   let d = '';
   for (const p of polys) for (const ring of p) {
     let lx = -9, ly = -9, first = true, seg = '';
@@ -203,7 +203,7 @@ export function renderMap(host, D) {
         const lg = e.target.closest('g.lab');
         if (lg) {
           const lab = (D.labs || [])[+lg.dataset.lab], r0 = box.getBoundingClientRect();
-          tip.innerHTML = `<b>${esc(lab.name)}</b><br>${esc([lab.muni, lab.prov].filter(Boolean).join(', '))}${lab.type ? `<br><i>${esc(lab.type)}</i>` : ""}${lab.reports ? `<br>${fmtInt(lab.n)} samples received` : ""}`; tip.hidden = false;
+          tip.innerHTML = `<b>${esc(lab.name)}</b><br>${esc(lab.address || [lab.muni, lab.prov].filter(Boolean).join(', '))}${lab.phone ? `<br>Tel. ${esc(lab.phone)}` : ''}${lab.type ? `<br><i>${esc(lab.type)}</i>` : ""}${lab.reports ? `<br>${fmtInt(lab.n)} samples received` : ""}`; tip.hidden = false;
           tip.style.left = Math.min(e.clientX - r0.left + 12, r0.width - 200) + 'px'; tip.style.top = (e.clientY - r0.top + 12) + 'px'; return;
         }
         const p = e.target.closest('path'); if (!p) { tip.hidden = true; return; }

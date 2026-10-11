@@ -1,11 +1,13 @@
 import { esc, fmtInt, fmtPct, fmtDate, cards, barList, section, tallyOf, $ } from './fmt.js';
 import { columnChart } from './charts.js';
 import { renderMap } from './map.js';
+import { initTheme } from './theme.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const REGION_ORDER = ['NCR', 'CAR', 'Region I', 'Region II', 'Region III', 'Region IV-A', 'Region IV-B', 'Region V', 'Region VI', 'NIR', 'Region VII', 'Region VIII', 'Region IX', 'Region X', 'Region XI', 'Region XII', 'Region XIII', 'BARMM'];
 
 async function init() {
+  initTheme();
   const main = $('#main');
   let D;
   try {
@@ -44,8 +46,8 @@ async function init() {
     section('Species submitted', barList(sp.map(p => ({ label: p.name, value: p.n, text: `${fmtInt(p.n)} · ${p.tested >= 5 ? pct(p) : '–'}` })))) +
     `</div>` +
     `<h2 class="map-h">Heat maps</h2><div id="maps"></div>` +
-    ((D.labs || []).length ? section('Participating laboratories', `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Laboratory</th><th>Type</th><th>Location</th><th class="num">Samples received</th></tr></thead><tbody>
-      ${[...D.labs].sort((a, b) => b.n - a.n).map(l => `<tr><td class="wrap">${esc(l.name)}</td><td>${esc(l.type || "")}</td><td class="wrap">${esc([l.muni, l.prov].filter(Boolean).join(', '))}</td><td class="num">${l.reports ? fmtInt(l.n) : "–"}</td></tr>`).join('')}</tbody></table></div>`,
+    ((D.labs || []).length ? section('Participating laboratories', `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Laboratory</th><th>Type</th><th>Address</th><th>Contact number</th><th class="num">Samples received</th></tr></thead><tbody>
+      ${[...D.labs].sort((a, b) => b.n - a.n).map(l => `<tr><td class="wrap"><b>${esc(l.name)}</b></td><td>${esc(l.type || "")}</td><td class="wrap" style="min-width:220px">${esc(l.address || [l.muni, l.prov].filter(Boolean).join(', '))}</td><td>${l.phone ? `<a href="tel:${esc(String(l.phone).replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a>` : '<span class="muted">–</span>'}</td><td class="num">${l.reports ? fmtInt(l.n) : "–"}</td></tr>`).join('')}</tbody></table></div>`,
       'Laboratories with a known location are also shown as dots on the heat maps.') : '');
   renderMap($('#maps'), D);
 }

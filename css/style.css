@@ -8,7 +8,7 @@
   --nodata: #d5dce2; --map0: #fff4e6; --map1: #fdc98a; --map2: #f58b46; --map3: #d9501a; --map4: #8f2408;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) { color-scheme: dark;
     --bg: #0e1418; --surface: #161e24; --surface2: #1b252c; --text: #e6edf3; --muted: #93a3b2; --line: #28343d;
     --accent: #2dd4bf; --accent-ink: #04201c; --accent-soft: #123631;
     --c-pos: #fb923c; --c-neg: #2dd4bf; --c-inc: #fbbf24; --c-oth: #64748b;
@@ -17,6 +17,15 @@
     --nodata: #34434f; --map0: #4a3a2c; --map1: #6b3c17; --map2: #b2531c; --map3: #e8782f; --map4: #ffb27a;
   }
 }
+:root[data-theme="dark"] { color-scheme: dark;
+    --bg: #0e1418; --surface: #161e24; --surface2: #1b252c; --text: #e6edf3; --muted: #93a3b2; --line: #28343d;
+    --accent: #2dd4bf; --accent-ink: #04201c; --accent-soft: #123631;
+    --c-pos: #fb923c; --c-neg: #2dd4bf; --c-inc: #fbbf24; --c-oth: #64748b;
+    --c1: #2dd4bf; --c2: #fb923c; --c3: #60a5fa; --c4: #fbbf24; --c5: #a78bfa; --c6: #f472b6;
+    --heat: #fb923c; --good: #2dd4bf; --bad: #f87171; --shadow: none;
+    --nodata: #34434f; --map0: #4a3a2c; --map1: #6b3c17; --map2: #b2531c; --map3: #e8782f; --map4: #ffb27a;
+}
+:root[data-theme="light"] { color-scheme: light; }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -201,7 +210,7 @@ details.d summary { cursor: pointer; font-weight: 600; }
 @media print { .logos { box-shadow: none; } }
 
 /* ---- brand banner: light header with the three logos built in (same in light and dark mode) ---- */
-.top { background: #fff; --text: #17212b; --muted: #5d6b79; --line: #e1e6eb; --surface: #fff; --surface2: #f4f6f8; --accent: #0f766e; --accent-ink: #fff; --accent-soft: #e2f3f1; color: var(--text); border-bottom: 3px solid var(--accent); }
+.top { background: var(--surface); color: var(--text); border-bottom: 3px solid var(--accent); }
 .top-in { padding-top: 12px; padding-bottom: 8px; }
 .brand { gap: 0; flex-wrap: wrap; row-gap: 8px; align-items: center; }
 .logos { background: none; box-shadow: none; padding: 0; border-radius: 0; gap: 0; }
@@ -267,3 +276,19 @@ img.bai { height: 58px; width: auto; display: block; margin-left: 6px; padding-l
 
 @media (max-width: 760px) { .refresh { flex-wrap: wrap; max-width: 100%; margin-left: 0; width: 100%; justify-content: space-between; } .refresh .stamp { text-align: left; flex: 1 1 200px; min-width: 0; } }
 
+
+/* ---- light / dark toggle ---- */
+.icon-btn { width: 38px; height: 38px; flex: none; border-radius: 8px; border: 1px solid var(--line); background: var(--surface2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn .ic-sun { display: none; }
+:root[data-theme="dark"] .icon-btn .ic-sun { display: block; }
+:root[data-theme="dark"] .icon-btn .ic-moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .icon-btn .ic-sun { display: block; }
+  :root:not([data-theme="light"]) .icon-btn .ic-moon { display: none; }
+}
+/* in dark mode the logos sit on a white chip so their artwork stays readable */
+:root[data-theme="dark"] .logos { background: #fff; border-radius: 12px; padding: 6px 14px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logos { background: #fff; border-radius: 12px; padding: 6px 14px; } }
+:root[data-theme="dark"] .top { box-shadow: 0 1px 0 var(--line); }
+body, .top, .navbar, .panel, .card { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
