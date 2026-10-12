@@ -37,7 +37,7 @@ export function columnChart({ labels, series, stacked = true, line = null, yFmt 
   for (let t = 0; t <= 4; t++) { const v = ymax * t / 4; grid += `<line class="grid" x1="${ML}" x2="${W - MR}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${ML - 6}" y="${y(v) + 4}" text-anchor="end">${yFmt(v)}</text>`; }
   let lineSvg = '';
   if (line) {
-    const vals = line.values; const lmax = niceMax(Math.max(0.05, ...vals.filter(v => v != null)) * 1.05);
+    const vals = line.values; const top = Math.max(0.05, ...vals.filter(v => v != null)) * 1.02; const lmax = [0.2, 0.4, 0.6, 0.8, 1].find(m => m >= top) || 1;   // steps of 5/10/15/20% so tick labels are round numbers
     const ly = v => MT + plotH - v / lmax * plotH;
     let d = '', dots = '', pen = false;
     vals.forEach((v, i) => {

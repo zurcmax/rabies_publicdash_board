@@ -122,19 +122,20 @@ export function renderMap(host, D) {
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))">
       <section class="panel"><div class="panel-h"><div><h2 id="map-title"></h2><p class="sub" id="map-sub"></p></div><div class="crumbs" id="crumbs"></div></div>
         <div class="mapbox" id="mapbox"><p class="loading">Loading map…</p></div><div id="legend" style="margin-top:8px"></div><p class="sub" id="map-note" style="margin-top:6px"></p></section>
-      <section class="panel"><div class="panel-h"><div><h2 id="tbl-title"></h2><p class="sub" id="tbl-sub"></p></div></div><div id="tbl"></div></section>
+      <section class="panel"><div class="panel-h"><div><h2 id="tbl-title"></h2><p class="sub" id="tbl-sub"></p></div></div><div id="tbl"></div>
+        <p class="sub" style="margin-top:6px"><b>% of all samples</b> = this place's share of every sample nationwide. <b>Positivity rate</b> = positive ÷ tested (positive + negative); "–" = fewer than 5 tested.</p></section>
     </div>`;
   let token = 0, sortKey = 'n', sortDir = -1;
 
   function table(rows, firstLabel, clickable) {
     const sorted = [...rows].sort((a, b) => {
-      const g = r => sortKey === 'name' ? r.name : sortKey === 'rate' ? (r.t.tested >= MIN_TESTED ? r.t.rate : -1) : r.t[sortKey];
+      const g = r => sortKey === 'name' ? r.name : sortKey === 'rate' ? (r.t.tested >= MIN_TESTED ? r.t.rate : -1) : sortKey === 'share' ? r.t.n : r.t[sortKey];
       const x = g(a), y = g(b);
       return (typeof x === 'string' ? x.localeCompare(y) : x - y) * sortDir;
     });
     const th = (k, l, num) => `<th class="${num ? 'num' : ''} ${sortKey === k ? 'sorted' : ''}" data-k="${k}" tabindex="0">${l}${sortKey === k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
-    $('#tbl', host).innerHTML = `<div class="tbl-wrap" style="max-height:520px;overflow:auto"><table class="tbl"><thead><tr>${th('name', firstLabel)}${th('n', 'Samples', 1)}${th('pos', 'Positive', 1)}${th('rate', 'Positivity', 1)}</tr></thead><tbody>
-      ${sorted.map(r => `<tr ${clickable && r.go ? `data-go="${esc(r.go)}" style="cursor:pointer"` : ''}><td class="wrap">${esc(r.name)}</td><td class="num">${fmtInt(r.t.n)}</td><td class="num">${fmtInt(r.t.pos)}</td><td class="num">${r.t.tested >= MIN_TESTED ? fmtPct(r.t.rate) : '<span class="muted" title="Fewer than 5 tested – rate not shown">–</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+    $('#tbl', host).innerHTML = `<div class="tbl-wrap" style="max-height:520px;overflow:auto"><table class="tbl"><thead><tr>${th('name', firstLabel)}${th('n', 'Samples', 1)}${th('share', '% of all samples', 1)}${th('pos', 'Positive', 1)}${th('rate', 'Positivity rate', 1)}</tr></thead><tbody>
+      ${sorted.map(r => `<tr ${clickable && r.go ? `data-go="${esc(r.go)}" style="cursor:pointer"` : ''}><td class="wrap">${esc(r.name)}</td><td class="num">${fmtInt(r.t.n)}</td><td class="num">${fmtPct(r.t.n / D.totals.n, 1)}</td><td class="num">${fmtInt(r.t.pos)}</td><td class="num">${r.t.tested >= MIN_TESTED ? fmtPct(r.t.rate) : '<span class="muted" title="Fewer than 5 tested – rate not shown">–</span>'}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
   async function draw() {
