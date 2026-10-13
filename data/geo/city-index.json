@@ -1,0 +1,18 @@
+[
+  { "code": "1030500000", "name": "Cagayan de Oro", "prov": "Misamis Oriental", "keys": ["cagayan de oro"] },
+  { "code": "1030900000", "name": "Iligan", "prov": "Lanao del Norte", "keys": ["iligan"] },
+  { "code": "1230800000", "name": "General Santos", "prov": "South Cotabato", "keys": ["general santos"] },
+  { "code": "1430300000", "name": "Baguio", "prov": "Benguet", "keys": ["baguio"] },
+  { "code": "1630400000", "name": "Butuan", "prov": "Agusan del Norte", "keys": ["butuan"] },
+  { "code": "1731500000", "name": "Puerto Princesa", "prov": "Palawan", "keys": ["puerto princesa"] },
+  { "code": "330100000", "name": "Angeles", "prov": "Pampanga", "keys": ["angeles"] },
+  { "code": "331400000", "name": "Olongapo", "prov": "Zambales", "keys": ["olongapo"] },
+  { "code": "431200000", "name": "Lucena", "prov": "Quezon", "keys": ["lucena"] },
+  { "code": "630200000", "name": "Bacolod", "prov": "Negros Occidental", "keys": ["bacolod"] },
+  { "code": "631000000", "name": "Iloilo", "prov": "Iloilo", "keys": ["iloilo"] },
+  { "code": "730600000", "name": "Cebu", "prov": "Cebu", "keys": ["cebu"] },
+  { "code": "731100000", "name": "Lapu-Lapu", "prov": "Cebu", "keys": ["lapu lapu", "lapulapu"] },
+  { "code": "731300000", "name": "Mandaue", "prov": "Cebu", "keys": ["mandaue"] },
+  { "code": "831600000", "name": "Tacloban", "prov": "Leyte", "keys": ["tacloban"] },
+  { "code": "931700000", "name": "Zamboanga", "prov": "Zamboanga del Sur", "keys": ["zamboanga"] }
+]

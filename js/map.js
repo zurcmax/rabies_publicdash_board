@@ -60,6 +60,24 @@ function linkKeys(keys, feats) {
   return link;
 }
 
+// Independent cities (Cebu City, Baguio, Zamboanga ...) have no municipal outline in the map data, but their barangay files exist:
+// draw the city as the combination of its barangay shapes.
+let cityIdx = null;
+async function cityFeatures(prov, keys) {
+  if (!keys.length) return [];
+  cityIdx ||= await getJSON('data/geo/city-index.json').catch(() => []);
+  const picks = [];
+  for (const k of keys) { const e = cityIdx.find(c => c.prov === prov && (c.keys.includes(k) || c.keys.includes(squash(k)))); if (e && !picks.includes(e)) picks.push(e); }
+  const out = [];
+  for (const e of picks) {
+    try {
+      const bf = await brgyFeatures(e.code);
+      const polys = bf.flatMap(f => f.geom.type === 'Polygon' ? [f.geom.coordinates] : f.geom.coordinates);
+      out.push({ code: e.code, name: e.name, key: nk(e.name), geom: { type: 'MultiPolygon', coordinates: polys } });
+    } catch { /* offline: the city stays in the table only */ }
+  }
+  return out;
+}
 // ---- projection ----
 const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
 function eachPt(geom, fn) {
@@ -154,10 +172,14 @@ export function renderMap(host, D) {
         rows = [...provT].map(([p, t]) => ({ name: p, t, go: p }));
         onPick = i => i.go && provT.has(i.go) && (view = { prov: i.go, muni: null }, draw());
       } else {
-        const feats = await provFeatures(view.prov); if (my !== token) return;
+        let feats = await provFeatures(view.prov); if (my !== token) return;
         const mrows = D.munis.filter(m => m.p === view.prov).map(m => ({ ...m, t: tallyOf(m) }));
         const byM = new Map(mrows.map(m => [m.mk, m]));
-        const link = linkKeys([...byM.keys()], feats), featRec = new Map([...link].map(([rk, f]) => [f.code, rk]));
+        let link = linkKeys([...byM.keys()], feats);
+        const extra = await cityFeatures(view.prov, [...byM.keys()].filter(k => !link.has(k)));   // big independent cities: drawn from their barangay shapes
+        if (my !== token) return;
+        if (extra.length) { feats = [...feats, ...extra]; link = linkKeys([...byM.keys()], feats); }
+        const featRec = new Map([...link].map(([rk, f]) => [f.code, rk]));
         let bf = null;
         if (view.muni) {
           const f = link.get(view.muni.key);
