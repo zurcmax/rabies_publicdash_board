@@ -1,5 +1,5 @@
 // Heat maps: province -> municipality -> barangay. Reads only the aggregate counts in public-data.json.
-import { esc, fmtInt, fmtPct, nk, tallyOf, $ } from './fmt.js';
+import { esc, fmtInt, fmtPct, fmtShare, nk, tallyOf, $ } from './fmt.js';
 
 const REGION_FILES = ['100000000', '200000000', '300000000', '400000000', '500000000', '600000000', '700000000', '800000000', '900000000', '1000000000', '1100000000', '1200000000', '1300000000', '1400000000', '1600000000', '1700000000', '1900000000'];
 const NCR_CODES = ['1303900000', '1307400000', '1307500000', '1307600000'];
@@ -8,7 +8,7 @@ const W = 700, MIN_TESTED = 5;
 
 const geo = { country: null, prov: {}, brgy: {} };
 let metric = 'rate', showLabs = true;
-let view = { prov: null, muni: null };
+let view = { region: null, prov: null, muni: null };
 
 const getJSON = async url => { const r = await fetch(url); if (!r.ok) throw new Error(url + ' ' + r.status); return r.json(); };
 const provNameOf = p => /^NCR/.test(p.adm2_en || '') ? 'Metro Manila' : (p.adm2_en || '');
@@ -130,11 +130,41 @@ function addLabMarkers(box, L, prov, labs) {
   box.querySelector('svg').insertAdjacentHTML('beforeend', out);
 }
 
+/** Search box with a drop-down list: type part of a province (or region) name and pick it to jump straight there. */
+function provinceFinder(el, provinces, onPick) {
+  const provs = provinces.filter(x => x.p && x.p !== 'Unspecified' && x.region && x.region !== 'Unassigned')
+    .map(x => ({ p: x.p, r: x.region, k: nk(x.p), rk: nk(x.region) })).sort((a, b) => a.p.localeCompare(b.p));
+  el.innerHTML = `<div class="finder"><input type="search" placeholder="Search province…" aria-label="Search province" autocomplete="off"><ul class="finder-list" role="listbox" hidden></ul></div>`;
+  const inp = el.querySelector('input'), ul = el.querySelector('ul');
+  let idx = 0, shown = [];
+  const mark = () => ul.querySelectorAll('li[data-i]').forEach(li => li.classList.toggle('on', +li.dataset.i === idx));
+  const draw = () => {
+    const q = nk(inp.value);
+    shown = (q ? provs.filter(x => x.k.includes(q) || x.rk.includes(q)) : provs).slice(0, 16); idx = 0;
+    ul.innerHTML = shown.map((x, i) => `<li role="option" data-i="${i}" class="${i === 0 ? 'on' : ''}"><b>${esc(x.p)}</b><span>${esc(x.r)}</span></li>`).join('') || '<li class="none">No province found</li>';
+    ul.hidden = false;
+  };
+  const choose = x => { ul.hidden = true; inp.value = ''; inp.blur(); onPick(x); };
+  inp.addEventListener('focus', draw);
+  inp.addEventListener('input', draw);
+  inp.addEventListener('blur', () => setTimeout(() => { ul.hidden = true; }, 150));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { idx = Math.min(shown.length - 1, idx + 1); mark(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { idx = Math.max(0, idx - 1); mark(); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (shown[idx]) choose(shown[idx]); e.preventDefault(); }
+    else if (e.key === 'Escape') { ul.hidden = true; }
+  });
+  ul.addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li) { e.preventDefault(); choose(shown[+li.dataset.i]); } });
+}
+
 export function renderMap(host, D) {
   const provT = new Map(D.provinces.map(p => [p.p, tallyOf(p)]));
+  const provRegion = new Map(D.provinces.map(p => [p.p, p.region]));
+  const regT = new Map((D.regions || []).map(r => [r.k, tallyOf(r)]));
   host.innerHTML = `
     <div class="row" style="margin-bottom:12px">
       <div class="seg" id="metric" role="group" aria-label="Map measure"><button data-m="rate">Positivity rate</button><button data-m="pos">Positive cases</button><button data-m="n">Samples tested</button></div>
+      <div id="prov-finder"></div>
       <label class="row" style="gap:6px"><input type="checkbox" id="showlabs" ${showLabs ? 'checked' : ''}> Show laboratories</label>
     </div>
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))">
@@ -153,24 +183,36 @@ export function renderMap(host, D) {
     });
     const th = (k, l, num) => `<th class="${num ? 'num' : ''} ${sortKey === k ? 'sorted' : ''}" data-k="${k}" tabindex="0">${l}${sortKey === k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
     $('#tbl', host).innerHTML = `<div class="tbl-wrap" style="max-height:520px;overflow:auto"><table class="tbl"><thead><tr>${th('name', firstLabel)}${th('n', 'Samples', 1)}${th('share', '% of all samples', 1)}${th('pos', 'Positive', 1)}${th('rate', 'Positivity rate', 1)}</tr></thead><tbody>
-      ${sorted.map(r => `<tr ${clickable && r.go ? `data-go="${esc(r.go)}" style="cursor:pointer"` : ''}><td class="wrap">${esc(r.name)}</td><td class="num">${fmtInt(r.t.n)}</td><td class="num">${fmtPct(r.t.n / D.totals.n, 1)}</td><td class="num">${fmtInt(r.t.pos)}</td><td class="num">${r.t.tested >= MIN_TESTED ? fmtPct(r.t.rate) : '<span class="muted" title="Fewer than 5 tested – rate not shown">–</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+      ${sorted.map(r => `<tr ${clickable && r.go ? `data-go="${esc(r.go)}" style="cursor:pointer"` : ''}><td class="wrap">${esc(r.name)}</td><td class="num">${fmtInt(r.t.n)}</td><td class="num">${fmtShare(r.t.n / D.totals.n)}</td><td class="num">${fmtInt(r.t.pos)}</td><td class="num">${r.t.tested >= MIN_TESTED ? fmtPct(r.t.rate) : '<span class="muted" title="Fewer than 5 tested – rate not shown">–</span>'}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
   async function draw() {
     const my = ++token;
     host.querySelectorAll('#metric button').forEach(b => b.classList.toggle('on', b.dataset.m === metric));
     const box = $('#mapbox', host);
-    $('#crumbs', host).innerHTML = `<button data-crumb="country">Philippines</button>${view.prov ? ` › <button data-crumb="prov">${esc(view.prov)}</button>` : ''}${view.muni ? ` › <b>${esc(view.muni.name)}</b>` : ''}`;
+    $('#crumbs', host).innerHTML = `<button data-crumb="country">Philippines</button>${view.region ? (view.prov ? ` › <button data-crumb="region">${esc(view.region)}</button>` : ` › <b>${esc(view.region)}</b>`) : ''}${view.prov ? (view.muni ? ` › <button data-crumb="prov">${esc(view.prov)}</button>` : ` › <b>${esc(view.prov)}</b>`) : ''}${view.muni ? ` › <b>${esc(view.muni.name)}</b>` : ''}`;
     const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true;
     try {
       let items = [], rows = [], title, sub, note = '', tblTitle, first, L, onPick = null, clickable = false;
-      if (!view.prov) {
+      if (!view.region && !view.prov) {
+        // regions: every province is coloured with the value of the region it belongs to
         const feats = await countryFeatures(); if (my !== token) return;
         L = geo.cl ||= layout(feats); geo.cd ||= feats.map(f => pathD(f.geom, L.proj));
-        items = feats.map((f, i) => ({ key: f.code, name: f.name || f.rawName, d: geo.cd[i], t: f.name ? provT.get(f.name) || null : null, go: f.name }));
-        title = 'Provinces'; sub = `${metricName()} by province.`; tblTitle = 'Provinces'; first = 'Province'; clickable = true;
-        rows = [...provT].map(([p, t]) => ({ name: p, t, go: p }));
-        onPick = i => i.go && provT.has(i.go) && (view = { prov: i.go, muni: null }, draw());
+        items = feats.map((f, i) => { const rg = provRegion.get(f.name); return { key: f.code, name: rg || f.rawName || f.name, d: geo.cd[i], t: rg ? regT.get(rg) || null : null, go: rg }; });
+        title = 'Regions'; sub = `${metricName()} by region. Click a region (or a row) to see its provinces.`; tblTitle = 'Regions'; first = 'Region'; clickable = true;
+        rows = [...regT].filter(([r]) => r !== 'Unassigned').map(([r, t]) => ({ name: r, t, go: r }));
+        onPick = i => i.go && regT.has(i.go) && (view = { region: i.go, prov: null, muni: null }, draw());
+      } else if (view.region && !view.prov) {
+        // the provinces of one region
+        const all = await countryFeatures(); if (my !== token) return;
+        const feats = all.filter(f => provRegion.get(f.name) === view.region);
+        const cache = geo.rc ||= {};
+        const cc = cache[view.region] ||= (() => { const l = layout(feats); return { l, ds: feats.map(f => pathD(f.geom, l.proj)) }; })();
+        L = cc.l;
+        items = feats.map((f, i) => ({ key: f.code, name: f.name, d: cc.ds[i], t: provT.get(f.name) || null, go: f.name }));
+        title = view.region; sub = `${metricName()} by province in ${view.region}. Click a province (or a row) to see its municipalities.`; tblTitle = `Provinces in ${view.region}`; first = 'Province'; clickable = true;
+        rows = D.provinces.filter(p => p.region === view.region).map(p => ({ name: p.p, t: provT.get(p.p), go: p.p }));
+        onPick = i => i.go && provT.has(i.go) && (view = { region: view.region, prov: i.go, muni: null }, draw());
       } else {
         let feats = await provFeatures(view.prov); if (my !== token) return;
         const mrows = D.munis.filter(m => m.p === view.prov).map(m => ({ ...m, t: tallyOf(m) }));
@@ -241,7 +283,8 @@ export function renderMap(host, D) {
         const th = e.target.closest('th[data-k]');
         if (th) { const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = k === 'name' ? 1 : -1; } table(rows, first, clickable); return; }
         const tr = e.target.closest('tr[data-go]'); if (!tr) return;
-        if (!view.prov) { view = { prov: tr.dataset.go, muni: null }; draw(); }
+        if (!view.region && !view.prov) { view = { region: tr.dataset.go, prov: null, muni: null }; draw(); }
+        else if (!view.prov) { view = { region: view.region, prov: tr.dataset.go, muni: null }; draw(); }
         else if (!view.muni) { const m = D.munis.find(x => x.p === view.prov && x.mk === tr.dataset.go); view.muni = { key: tr.dataset.go, name: m ? m.m : tr.dataset.go }; draw(); }
       };
     } catch (e) { console.error(e); box.innerHTML = `<p class="empty">The map could not be drawn. Please refresh the page.</p>`; }
@@ -250,9 +293,12 @@ export function renderMap(host, D) {
 
   host.addEventListener('click', e => {
     const c = e.target.closest('button[data-crumb]'); if (!c) return;
-    if (c.dataset.crumb === 'country') view = { prov: null, muni: null }; else view.muni = null;
+    if (c.dataset.crumb === 'country') view = { region: null, prov: null, muni: null };
+    else if (c.dataset.crumb === 'region') view = { region: view.region, prov: null, muni: null };
+    else view.muni = null;
     draw();
   });
+  provinceFinder($('#prov-finder', host), D.provinces, x => { view = { region: x.r, prov: x.p, muni: null }; draw(); });
   $('#showlabs', host).onchange = e => { showLabs = e.target.checked; draw(); };
   $('#metric', host).onclick = e => { const m = e.target.dataset.m; if (m) { metric = m; draw(); } };
   draw();

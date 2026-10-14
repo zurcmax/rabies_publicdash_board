@@ -2,6 +2,7 @@
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const fmtInt = n => n == null ? '—' : Math.round(n).toLocaleString('en-US');
 export const fmtPct = (x, d = 1) => x == null ? '—' : (x * 100).toFixed(d) + '%';
+export const fmtShare = x => x == null ? '—' : (x * 100).toFixed(x < 0.01 ? 2 : 1) + '%';   // two decimals under 1% so small places do not read as 0.0%
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const fmtDate = iso => iso ? `${+iso.slice(8, 10)} ${MON[+iso.slice(5, 7) - 1]} ${iso.slice(0, 4)}` : '—';
 export const $ = (s, r = document) => r.querySelector(s);
@@ -25,7 +26,7 @@ export function statTable(items, firstLabel, total) {
     const rate = t.tested < 5
       ? `<span class="muted" title="Fewer than 5 tested – rate not shown">–</span> <small class="muted">${t.pos}/${t.tested}</small>`
       : `<b style="color:var(--c-pos)">${fmtPct(t.rate, 1)}</b> <small class="muted" title="${t.pos} positive of ${t.tested} tested">${t.pos}/${t.tested}</small>${t.tested < 30 ? `<span class="muted" title="Only ${t.tested} tested – unreliable">*</span>` : ''}`;
-    return `<tr><td>${esc(name)}</td><td class="num">${fmtInt(t.n)}</td><td class="num">${fmtPct(share, 1)}</td><td class="num">${fmtInt(t.pos)}</td><td class="num">${fmtInt(t.neg)}</td><td class="num">${rate}</td></tr>`;
+    return `<tr><td>${esc(name)}</td><td class="num">${fmtInt(t.n)}</td><td class="num">${fmtShare(share)}</td><td class="num">${fmtInt(t.pos)}</td><td class="num">${fmtInt(t.neg)}</td><td class="num">${rate}</td></tr>`;
   }).join('');
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>${esc(firstLabel)}</th>
     <th class="num" title="Samples submitted in this row">Samples</th>

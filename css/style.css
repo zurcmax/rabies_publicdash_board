@@ -292,3 +292,13 @@ img.bai { height: 58px; width: auto; display: block; margin-left: 6px; padding-l
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logos { background: #fff; border-radius: 12px; padding: 6px 14px; } }
 :root[data-theme="dark"] .top { box-shadow: 0 1px 0 var(--line); }
 body, .top, .navbar, .panel, .card { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+
+/* province search box (heat maps) */
+.finder { position: relative; }
+.finder input { min-width: 230px; }
+.finder-list { position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; min-width: 260px; max-height: 320px; overflow: auto; margin: 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.finder-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 9px; border-radius: 7px; cursor: pointer; font-size: 14px; }
+.finder-list li span { color: var(--muted); font-size: 12px; align-self: center; }
+.finder-list li.on, .finder-list li:hover { background: var(--accent-soft); }
+.finder-list li.none { color: var(--muted); cursor: default; }
+@media (max-width: 640px) { .finder, .finder input { width: 100%; } }
