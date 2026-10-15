@@ -24,7 +24,8 @@ async function init() {
   const label = m => MONTHS[+m.slice(5) - 1] + (m.slice(5) === '01' || m === mo[0].m ? " '" + m.slice(2, 4) : '');
   const pct = p => `<b style="color:var(--c-pos)">${fmtPct(p.rate, 0)}</b>${p.tested < 30 ? `<span title="Only ${p.tested} tested - unreliable">*</span>` : ""}`;
   const prov = D.provinces.map(tallyOf).map((x, i) => ({ ...x, name: D.provinces[i].p })).sort((a, b) => b.n - a.n).slice(0, 10);
-  const reg = D.regions.map((x, i) => ({ ...tallyOf(x), name: x.k })).sort((a, b) => REGION_ORDER.indexOf(a.name) - REGION_ORDER.indexOf(b.name));
+  const regRank = k => { const i = REGION_ORDER.indexOf(k); return i < 0 ? 99 : i; };   // 'Unassigned' (no province recorded) goes last
+  const reg = D.regions.map((x, i) => ({ ...tallyOf(x), name: x.k === 'Unassigned' ? 'Region not recorded' : x.k })).sort((a, b) => regRank(a.name) - regRank(b.name));
   const sp = D.species.map(x => ({ ...tallyOf(x), name: x.k })).slice(0, 8);
 
   main.innerHTML =

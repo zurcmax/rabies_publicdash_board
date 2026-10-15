@@ -171,7 +171,7 @@ export function renderMap(host, D) {
       <section class="panel"><div class="panel-h"><div><h2 id="map-title"></h2><p class="sub" id="map-sub"></p></div><div class="crumbs" id="crumbs"></div></div>
         <div class="mapbox" id="mapbox"><p class="loading">Loading map…</p></div><div id="legend" style="margin-top:8px"></div><p class="sub" id="map-note" style="margin-top:6px"></p></section>
       <section class="panel"><div class="panel-h"><div><h2 id="tbl-title"></h2><p class="sub" id="tbl-sub"></p></div></div><div id="tbl"></div>
-        <p class="sub" style="margin-top:6px"><b>% of all samples</b> = this place's share of every sample nationwide. <b>Positivity rate</b> = positive ÷ tested (positive + negative); "–" = fewer than 5 tested.</p></section>
+        <p class="sub" style="margin-top:6px"><b>% of all samples</b> = this place's share of every sample nationwide. <b>Positivity rate</b> = positive ÷ tested (positive + negative), with the counts shown beside it; samples that were unfit for testing or inconclusive are not counted as tested. "–" = fewer than 5 tested; * = fewer than 30 tested, so the rate is unreliable.</p></section>
     </div>`;
   let token = 0, sortKey = 'n', sortDir = -1;
 
@@ -183,7 +183,7 @@ export function renderMap(host, D) {
     });
     const th = (k, l, num) => `<th class="${num ? 'num' : ''} ${sortKey === k ? 'sorted' : ''}" data-k="${k}" tabindex="0">${l}${sortKey === k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
     $('#tbl', host).innerHTML = `<div class="tbl-wrap" style="max-height:520px;overflow:auto"><table class="tbl"><thead><tr>${th('name', firstLabel)}${th('n', 'Samples', 1)}${th('share', '% of all samples', 1)}${th('pos', 'Positive', 1)}${th('rate', 'Positivity rate', 1)}</tr></thead><tbody>
-      ${sorted.map(r => `<tr ${clickable && r.go ? `data-go="${esc(r.go)}" style="cursor:pointer"` : ''}><td class="wrap">${esc(r.name)}</td><td class="num">${fmtInt(r.t.n)}</td><td class="num">${fmtShare(r.t.n / D.totals.n)}</td><td class="num">${fmtInt(r.t.pos)}</td><td class="num">${r.t.tested >= MIN_TESTED ? fmtPct(r.t.rate) : '<span class="muted" title="Fewer than 5 tested – rate not shown">–</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+      ${sorted.map(r => `<tr ${clickable && r.go ? `data-go="${esc(r.go)}" style="cursor:pointer"` : ''}><td class="wrap">${esc(r.name)}</td><td class="num">${fmtInt(r.t.n)}</td><td class="num">${fmtShare(r.t.n / D.totals.n)}</td><td class="num">${fmtInt(r.t.pos)}</td><td class="num">${r.t.tested >= MIN_TESTED ? `${fmtPct(r.t.rate)} <small class="muted" title="${r.t.pos} positive of ${r.t.tested} tested">${r.t.pos}/${r.t.tested}</small>${r.t.tested < 30 ? `<span class="muted" title="Only ${r.t.tested} tested – the rate is unreliable">*</span>` : ''}` : `<span class="muted" title="Fewer than 5 tested – rate not shown">–</span> <small class="muted">${r.t.pos}/${r.t.tested}</small>`}</td></tr>`).join('')}</tbody></table></div>`;
   }
 
   async function draw() {
@@ -273,7 +273,7 @@ export function renderMap(host, D) {
         }
         const p = e.target.closest('path'); if (!p) { tip.hidden = true; return; }
         const i = byKey.get(p.dataset.k); if (!i) return; const r = box.getBoundingClientRect();
-        tip.innerHTML = `<b>${esc(i.name)}</b><br>${i.t ? `${fmtInt(i.t.n)} samples · ${fmtInt(i.t.pos)} positive<br>Positivity ${i.t.tested >= MIN_TESTED ? fmtPct(i.t.rate) : 'not shown (few tested)'}` : 'No samples'}`;
+        tip.innerHTML = `<b>${esc(i.name)}</b><br>${i.t ? `${fmtInt(i.t.n)} samples · ${fmtInt(i.t.pos)} positive<br>Positivity ${i.t.tested >= MIN_TESTED ? `${fmtPct(i.t.rate)} (${i.t.pos} of ${i.t.tested} tested)${i.t.tested < 30 ? ' – few tested, unreliable' : ''}` : `not shown (${i.t.pos} of ${i.t.tested} tested)`}` : 'No samples'}`;
         tip.hidden = false; tip.style.left = Math.min(e.clientX - r.left + 12, r.width - 200) + 'px'; tip.style.top = (e.clientY - r.top + 12) + 'px';
       };
       box.onmouseleave = () => tip.hidden = true;
