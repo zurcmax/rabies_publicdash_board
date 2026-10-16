@@ -36,7 +36,12 @@ async function brgyFeatures(code) {
 }
 
 // ---- matching place names to outlines ----
-const ALIAS = { bulakan: 'bulacan', baliuag: 'baliwag', montalban: 'rodriguez' };
+// sheet spelling -> the spelling used in the map data (same place, different name)
+const ALIAS = {
+  bulakan: 'bulacan', baliuag: 'baliwag', montalban: 'rodriguez',
+  'general mariano alvarez': 'gen mariano alvarez',   // Cavite: the map data abbreviates "Gen."
+  'san jose de buenavista': 'san jose',               // Antique: the map data uses the short name
+};
 const squash = s => s.replace(/ /g, '');
 function formsOf(name) {
   const base = nk(name), out = new Set([base, squash(base)]);
